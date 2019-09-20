@@ -17,7 +17,13 @@
             <NumberInput :large="true" :min="0" :max="999" v-model="ms"></NumberInput>
         </div>
         <div class="button-container">
-            <span class="button button--success" @click="download">Download subtitles</span>
+            <a class="button button--success"
+                v-if="file !== null"
+                :href="subtitleUrl"
+                :download="file.name"
+            >
+                Download subtitles
+            </a>
         </div>
     </div>
 </template>
@@ -50,17 +56,16 @@ export default {
         sub() {
             return !this.switchValue;
         },
+        subtitleUrl() {
+            return window.URL.createObjectURL(this.subtitleBlob);
+        },
+        subtitleBlob() {
+            return new Blob(["\ufeff", this.shiftSubtitleLines(this.fileLines, this.h, this.m, this.s, this.ms, this.sub)]);
+        }
     },
     mounted() {
         this.fileReader.onload = () => {
-            let fileArray = new Uint8Array(this.fileReader.result);
-            let fileContent = '';
-
-            for (var i = 0; i < fileArray.length; ++i) {
-                fileContent += String.fromCharCode(fileArray[i]);
-            }
-
-            this.fileLines = fileContent.split("\n");
+            this.fileLines = this.fileReader.result.split("\n");
         };
     },
     methods: {
@@ -127,22 +132,9 @@ export default {
             this.file = file;
 
             if (null !== file) {
-                this.fileReader.readAsArrayBuffer(file);
+                this.fileReader.readAsText(file);
             }
         },
-        download() {
-            if (null === this.file) {
-                return;
-            }
-
-            let element = document.createElement('a');
-            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(this.shiftSubtitleLines(this.fileLines, this.h, this.m, this.s, this.ms, this.sub)));
-            element.setAttribute('download', this.file.name);
-            element.style.display = 'none';
-            this.$refs.subtitleShifter.appendChild(element);
-            element.click();
-            this.$refs.subtitleShifter.removeChild(element);
-        }
     }
 };
 </script>

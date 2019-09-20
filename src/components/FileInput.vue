@@ -1,17 +1,30 @@
 <template>
     <div class="file-container">
         <div :class="['drop-zone', {'drop-zone--hover': zoneHover}]">
-            <div class="drop-zone__inner" @click.self="clickLabel"
+            <div class="drop-zone__inner"
+                @click.self="clickLabel"
                 @dragover.prevent="zoneHover = true"
                 @dragenter.prevent="zoneHover = true"
                 @dragleave.prevent="zoneHover = false"
                 @dragend.prevent="zoneHover = false"
-                @drop.prevent="loadFile">
-                <input id="file" ref="fileInput" class="drop-zone__input" type="file" @change="fileChanged">
-                <label ref="fileLabel" class="drop-zone__label" for="file">{{ labelText }}</label>
+                @drop.prevent="loadFile"
+            >
+                <input
+                    id="file"
+                    ref="fileInput"
+                    class="drop-zone__input"
+                    type="file"
+                    :accept="fileExtensions"
+                    @change="fileChanged"
+                >
+                <label ref="fileLabel" class="drop-zone__label" for="file">
+                    {{ labelText }}
+                </label>
             </div>
         </div>
-        <div class="file-container__error">{{ error }}</div>
+        <div class="file-container__error">
+            {{ error }}
+        </div>
     </div>
 </template>
 
@@ -38,18 +51,26 @@ export default {
             }
 
             return this.file.name;
-        }
+        },
+        fileExtensions() {
+            return this.fileFormats.map(extension => `.${extension}`).join(',');
+        },
     },
     methods: {
         loadFile(event) {
             this.zoneHover = false;
-            this.$refs.fileInput.files = event.dataTransfer.files;
+            try {
+                this.$refs.fileInput.files = event.dataTransfer.files;
+            } catch (error) {
+                this.error = 'The browser does not support drag and drop';
+            }
+            this.fileChanged();
         },
-        fileChanged(event) {
-            if (event.target.files.length === 0) {
+        fileChanged() {
+            if (this.$refs.fileInput.files.length === 0) {
                 this.file = null;
             } else {
-                this.file = this.isValidFile(event.target.files[0]) ? event.target.files[0] : null;
+                this.file = this.isValidFile(this.$refs.fileInput.files[0]) ? this.$refs.fileInput.files[0] : null;
             }
 
             this.$emit('change', this.file);

@@ -45,6 +45,7 @@ body {
     line-height: 1.25;
     vertical-align: middle;
     text-align: center;
+    text-decoration: none;
 
     &--success {
         color: #fff;
